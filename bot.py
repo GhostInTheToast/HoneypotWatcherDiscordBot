@@ -159,20 +159,29 @@ class HoneypotWatcherBot(commands.Bot):
                     await message.author.ban(reason="Posted in restricted channel - auto-ban")
                     logger.warning(f"BANNED user {message.author.name} ({message.author.id}) for posting in restricted channel")
                     
-                    # Delete all messages from this user in the past 24 hours
+                    # Delete all messages from this user in ALL CHANNELS in the past 24 hours
                     from datetime import datetime, timedelta
                     cutoff_time = datetime.utcnow() - timedelta(hours=24)
                     
                     deleted_count = 0
-                    async for msg in message.channel.history(limit=None, after=cutoff_time):
-                        if msg.author.id == message.author.id:
-                            try:
-                                await msg.delete()
-                                deleted_count += 1
-                            except Exception as msg_delete_error:
-                                logger.error(f"Failed to delete message {msg.id}: {msg_delete_error}")
+                    total_channels = 0
                     
-                    logger.info(f"Deleted {deleted_count} messages from banned user {message.author.name}")
+                    # Loop through ALL channels in the server
+                    for channel in message.guild.channels:
+                        if hasattr(channel, 'history'):  # Only text channels have history
+                            total_channels += 1
+                            try:
+                                async for msg in channel.history(limit=None, after=cutoff_time):
+                                    if msg.author.id == message.author.id:
+                                        try:
+                                            await msg.delete()
+                                            deleted_count += 1
+                                        except Exception as msg_delete_error:
+                                            logger.error(f"Failed to delete message {msg.id} in {channel.name}: {msg_delete_error}")
+                            except Exception as channel_error:
+                                logger.error(f"Failed to access channel {channel.name}: {channel_error}")
+                    
+                    logger.warning(f"NUCLEAR PURGE: Deleted {deleted_count} messages from banned user {message.author.name} across {total_channels} channels")
                     
                 except Exception as ban_error:
                     logger.error(f"Failed to ban user {message.author.name}: {ban_error}")
@@ -199,7 +208,7 @@ class HoneypotWatcherBot(commands.Bot):
                 try:
                     log_channel = self.get_channel(log_channel_id)
                     if log_channel:
-                        log_message = f"🚨 **USER BANNED**\n**User:** {message.author.name} ({message.author.id})\n**Channel:** {message.channel.name} ({message.channel.id})\n**Ghost Role:** {'Yes' if has_ghost_role else 'No'}\n**Message:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}\n**Action:** BANNED + Messages deleted from past 24h"
+                        log_message = f"💥 **NUCLEAR BAN EXECUTED**\n**User:** {message.author.name} ({message.author.id})\n**Channel:** {message.channel.name} ({message.channel.id})\n**Ghost Role:** {'Yes' if has_ghost_role else 'No'}\n**Message:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}\n**Action:** BANNED + ALL MESSAGES PURGED FROM ALL CHANNELS (past 24h)"
                         await log_channel.send(log_message)
                     else:
                         logger.warning(f"Could not find log channel with ID {log_channel_id}")
