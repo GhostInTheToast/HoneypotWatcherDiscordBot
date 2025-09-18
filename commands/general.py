@@ -87,6 +87,30 @@ class GeneralCommands(commands.Cog):
         
         await interaction.response.send_message(embed=embed)
     
+    @commands.command(name="message")
+    async def warning_message(self, ctx):
+        """Post the warning message about the channel."""
+        # Check if user is authorized
+        authorized_user_id = 150009383592525826
+        target_channel_id = 1418079817256931350
+        
+        if ctx.author.id != authorized_user_id:
+            await ctx.send("❌ You don't have permission to use this command.")
+            return
+        
+        # Get the target channel
+        target_channel = self.bot.get_channel(target_channel_id)
+        if not target_channel:
+            await ctx.send(f"❌ Could not find channel with ID {target_channel_id}")
+            return
+        
+        # Post the warning message in the target channel
+        warning_text = "**Do NOT post here. This channel is for finding chatbots only. Post here and you will be __immediately banned__. This is not a joke.**"
+        await target_channel.send(warning_text)
+        
+        # Confirm to the user who ran the command
+        await ctx.send(f"✅ Warning message posted in {target_channel.name}")
+    
     @commands.Cog.listener()
     async def on_ready(self):
         """Called when the bot is ready."""

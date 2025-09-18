@@ -83,9 +83,22 @@ class HoneypotWatcherBot(commands.Bot):
         # Set bot status
         activity = discord.Activity(
             type=discord.ActivityType.watching,
-            name="for honeypot activities"
+            name="for traitors..."
         )
         await self.change_presence(activity=activity)
+        
+        # Send "Pathetic." message to specific channel
+        target_channel_id = 1418079817256931350
+        log_channel_id = 385510724912283648
+        try:
+            channel = self.get_channel(target_channel_id)
+            if channel:
+                await channel.send("Pathetic.")
+                logger.info(f"Sent 'Pathetic.' message to channel {target_channel_id}")
+            else:
+                logger.warning(f"Could not find channel with ID {target_channel_id}")
+        except Exception as e:
+            logger.error(f"Failed to send message to channel {target_channel_id}: {e}")
     
     async def on_command_error(self, ctx, error):
         """Handle command errors."""
@@ -102,6 +115,79 @@ class HoneypotWatcherBot(commands.Bot):
         
         logger.error(f"Command error in {ctx.command}: {error}")
         await ctx.send("❌ An error occurred while executing the command.")
+    
+    async def on_message(self, message):
+        """Handle incoming messages."""
+        # Ignore messages from the bot itself
+        if message.author == self.user:
+            return
+        
+        # Whitelist of role IDs that should be ignored
+        whitelist_roles = [
+            #462663247934390275,  # Ghost role
+            # 213335817823715328,  # mods
+            # 359424853285142539,  # Knowledgeable
+            # 890067789832929280,  # Helpful
+            # 213334124767739904,  # Daunzo
+        ]
+        
+        # Check if user has any whitelisted roles
+        user_role_ids = [role.id for role in message.author.roles]
+        if any(role_id in whitelist_roles for role_id in user_role_ids):
+            # User has a whitelisted role, ignore completely
+            return
+        
+        # Check if message is in the target channel
+        target_channel_id = 1418079817256931350
+        log_channel_id = 385510724912283648
+        if message.channel.id == target_channel_id:
+            try:
+                # Check if user has the ghost role
+                ghost_role_id = 462663247934390275
+                has_ghost_role = any(role.id == ghost_role_id for role in message.author.roles)
+                
+                # Delete the user's message first
+                try:
+                    await message.delete()
+                    logger.info(f"Deleted message from {message.author.name}")
+                except Exception as delete_error:
+                    logger.error(f"Failed to delete message from {message.author.name}: {delete_error}")
+                
+                # Send elimination messages to log channel instead
+                log_channel = self.get_channel(log_channel_id)
+                if log_channel:
+                    if has_ghost_role:
+                        # Special message for ghost role users
+                        await log_channel.send(f"***{message.author.name} eliminated.***")
+                        
+                        # Send the GIF
+                        gif_url = "https://tenor.com/view/itachi-sharingan-mangekyou-tsukuyomi-tsukyomi-gif-2677620834910513053"
+                        await log_channel.send(gif_url)
+                    else:
+                        # Regular elimination message
+                        await log_channel.send(f"***{message.author.name} eliminated.***")
+                        
+                        # Send the GIF
+                        gif_url = "https://tenor.com/view/itachi-sharingan-mangekyou-tsukuyomi-tsukyomi-gif-2677620834910513053"
+                        await log_channel.send(gif_url)
+                
+                # Log activity to the log channel
+                try:
+                    log_channel = self.get_channel(log_channel_id)
+                    if log_channel:
+                        log_message = f"👁️ **Activity Detected**\n**User:** {message.author.name} ({message.author.id})\n**Channel:** {message.channel.name} ({message.channel.id})\n**Ghost Role:** {'Yes' if has_ghost_role else 'No'}\n**Message:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}"
+                        await log_channel.send(log_message)
+                    else:
+                        logger.warning(f"Could not find log channel with ID {log_channel_id}")
+                except Exception as log_error:
+                    logger.error(f"Failed to log activity to channel {log_channel_id}: {log_error}")
+ 
+                logger.info(f"Responded to message from {message.author.name} in channel {target_channel_id} (ghost role: {has_ghost_role})")
+            except Exception as e:
+                logger.error(f"Failed to respond to message in channel {target_channel_id}: {e}")
+        
+        # Process commands (important for command handling)
+        await self.process_commands(message)
     
     async def close(self):
         """Called when the bot is shutting down."""

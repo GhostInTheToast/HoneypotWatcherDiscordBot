@@ -1,6 +1,6 @@
 # HoneypotWatcher Discord Bot
 
-A Discord bot built with discord.py for monitoring honeypot activities. The bot is designed with a modular architecture for easy maintenance and extension.
+A Discord bot built with discord.py for monitoring and managing Discord channels with advanced features like message deletion, role-based whitelisting, and automated responses.
 
 ## 🏗️ Project Structure
 
@@ -9,7 +9,7 @@ HoneypotWatcherDiscordBot/
 ├── bot.py                 # Main bot entry point
 ├── run.py                 # Simple script to run the bot
 ├── requirements.txt       # Python dependencies
-├── .env.example          # Environment variables template
+├── .env                   # Environment variables (create this)
 ├── .gitignore            # Git ignore file
 ├── README.md             # This file
 ├── config/               # Configuration files
@@ -44,7 +44,7 @@ HoneypotWatcherDiscordBot/
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/GhostInTheToast/HoneypotWatcherDiscordBot.git
    cd HoneypotWatcherDiscordBot
    ```
 
@@ -61,7 +61,7 @@ HoneypotWatcherDiscordBot/
 
 4. **Set up environment variables:**
    ```bash
-   cp .env.example .env
+   python setup.py  # Creates .env file
    # Edit .env with your Discord bot token and other settings
    ```
 
@@ -74,7 +74,7 @@ HoneypotWatcherDiscordBot/
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Environment Variables (.env file)
 
 Create a `.env` file in the project root with the following variables:
 
@@ -101,113 +101,184 @@ LOG_FILE=logs/bot.log
 5. Enable the following intents in the bot settings:
    - Server Members Intent
    - Message Content Intent
-6. Invite the bot to your server with the necessary permissions
+6. Invite the bot to your server with the necessary permissions:
+   - Send Messages
+   - Manage Messages (for message deletion)
+   - Use Slash Commands
+   - Read Message History
 
-## 📋 Features
+## 🎯 Bot Features
 
-### Commands
+### Channel Management
 
-#### General Commands
+#### Target Channel
+- **Purpose:** The channel the bot monitors for messages
+- **Current ID:** `1418079817256931350` (configurable in `bot.py`)
+- **Behavior:** 
+  - Deletes user messages immediately
+  - No bot responses sent here
+  - Clean channel with only deletions
+
+#### Log Channel
+- **Purpose:** Where bot sends all responses and logs
+- **Current ID:** `385510724912283648` (configurable in `bot.py`)
+- **Content:**
+  - Elimination messages
+  - Itachi Sharingan GIFs
+  - Detailed activity logs
+  - Bot responses
+
+### Whitelist System
+
+The bot has a whitelist system that completely ignores users with specific roles:
+
+```python
+# In bot.py, whitelist_roles array
+whitelist_roles = [
+    # 462663247934390275,  # Ghost role
+    # 213335817823715328,  # mods
+    # 359424853285142539,  # Knowledgeable
+    # 890067789832929280,  # Helpful
+    # 213334124767739904,  # Daunzo
+]
+```
+
+**To add roles to whitelist:**
+1. Get the role ID (right-click role → Copy Role ID with Developer Mode on)
+2. Uncomment and add the role ID to the `whitelist_roles` array
+3. Restart the bot
+
+**Whitelisted users:**
+- ✅ Can post freely in target channel
+- ✅ No message deletion
+- ✅ No bot responses
+- ✅ Complete bypass of all bot features
+
+### Message Processing
+
+When a non-whitelisted user posts in the target channel:
+
+1. **Message Deletion** - User's message is immediately deleted
+2. **Log Channel Response** - Bot sends elimination message to log channel
+3. **GIF Response** - Itachi Sharingan GIF is sent to log channel
+4. **Activity Logging** - Detailed log entry with user info and message content
+
+### Special Role Handling
+
+- **Ghost Role Users** - Get special "You have the ghost role also" message
+- **Regular Users** - Get standard elimination message
+
+## 📋 Commands
+
+### General Commands
 - `/ping` - Check bot latency
 - `/help` - Show help information
 - `/status` - Show bot status
 
-#### Honeypot Commands
-- `/monitor_add <address> [description]` - Add address to monitoring
-- `/monitor_remove <address>` - Remove address from monitoring
-- `/monitor_list` - List all monitored addresses
-- `/monitor_report <address> <activity>` - Report suspicious activity
-
-#### Admin Commands
+### Admin Commands
 - `/admin_status` - Show detailed bot status
 - `/admin_config` - Show bot configuration
 - `/admin_reload <extension>` - Reload a bot extension
 - `/admin_sync` - Sync slash commands
 
-### Services
+### Special Commands
+- `!message` - Post warning message (restricted to specific user ID)
 
-#### HoneypotService
-- Monitors addresses for suspicious activities
-- Tracks suspicious activity counts
-- Triggers alerts when thresholds are exceeded
+## 🔧 Customization
 
-#### NotificationService
-- Sends alerts and notifications to Discord channels
-- Supports different severity levels
-- Configurable notification channels and roles
+### Changing Channel IDs
 
-## 🔧 Development
+To change the target or log channels, edit these values in `bot.py`:
 
-### Adding New Commands
+```python
+# Target channel (monitored channel)
+target_channel_id = 1418079817256931350
 
-1. Create a new file in the `commands/` directory
-2. Follow the pattern in existing command files
-3. Add the new command to the `initial_extensions` list in `bot.py`
+# Log channel (where responses are sent)
+log_channel_id = 385510724912283648
+```
 
-### Adding New Services
+### Changing Authorized Users
 
-1. Create a new service class in the `services/` directory
-2. Inherit from `BaseService`
-3. Implement the required abstract methods
-4. Add the service to the bot's service manager
+To change who can use the `!message` command, edit this in `commands/general.py`:
 
-### Database
+```python
+authorized_user_id = 150009383592525826
+```
 
-The bot uses SQLite for data persistence. The database is automatically created and initialized when the bot starts. Database operations are handled through the `DatabaseManager` class in `config/database.py`.
+### Changing GIFs
 
-## 📝 Logging
+To change the elimination GIF, edit this in `bot.py`:
 
-The bot uses the `loguru` library for logging. Logs are written to both the console and a file (`logs/bot.log`). Log levels can be configured through the `LOG_LEVEL` environment variable.
+```python
+gif_url = "https://tenor.com/view/itachi-sharingan-mangekyou-tsukuyomi-tsukyomi-gif-2677620834910513053"
+```
+
+## 🛡️ Security
+
+### What's Safe to Push to GitHub
+- ✅ Source code
+- ✅ Channel/User/Role IDs (not sensitive)
+- ✅ Configuration structure
+- ✅ Documentation
+
+### What's Protected
+- ❌ `.env` file (contains Discord token)
+- ❌ `logs/` directory (contains log files)
+- ❌ `data/` directory (contains database files)
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **Bot not responding to commands:**
-   - Check that the bot has the necessary permissions
-   - Verify that slash commands are synced using `/admin_sync`
-   - Ensure the bot is online and connected
+1. **Bot not responding:**
+   - Check Discord token in `.env` file
+   - Verify bot has necessary permissions
+   - Check if bot is online
 
-2. **Database errors:**
-   - Check that the `data/` directory is writable
-   - Verify database file permissions
+2. **Messages not being deleted:**
+   - Ensure bot has "Manage Messages" permission
+   - Check if user has whitelisted role
 
-3. **Import errors:**
-   - Ensure all dependencies are installed
-   - Check that you're running from the correct directory
+3. **Commands not working:**
+   - Use `/admin_sync` to sync slash commands
+   - Check bot permissions
+
+4. **Import errors:**
+   - Activate virtual environment: `source venv/bin/activate`
+   - Install dependencies: `pip install -r requirements.txt`
 
 ### Debug Mode
 
-Enable debug mode by setting `BOT_DEBUG=True` in your `.env` file. This will provide more detailed logging information.
+Enable debug mode by setting `BOT_DEBUG=True` in your `.env` file for more detailed logging.
+
+## 📝 Logging
+
+The bot uses the `loguru` library for logging:
+- **Console output** - Real-time logging
+- **File logging** - Saved to `logs/bot.log`
+- **Rotation** - Logs rotate at 10MB
+- **Retention** - Keeps logs for 7 days
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
+4. Test thoroughly
 5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## 🆘 Support
 
-If you encounter any issues or have questions, please:
-
-1. Check the troubleshooting section above
-2. Search existing issues on GitHub
-3. Create a new issue with detailed information about your problem
-
-## 🔄 Updates
-
-To update the bot:
-
-1. Pull the latest changes: `git pull origin main`
-2. Update dependencies: `pip install -r requirements.txt`
-3. Restart the bot
+If you encounter issues:
+1. Check the troubleshooting section
+2. Check bot logs in `logs/bot.log`
+3. Create an issue on GitHub
 
 ---
 
-**Note:** This bot is designed for monitoring honeypot activities. Make sure to comply with all applicable laws and regulations when using this bot.
+**Note:** This bot is designed for Discord server management. Make sure to comply with Discord's Terms of Service and your server's rules when using this bot.
