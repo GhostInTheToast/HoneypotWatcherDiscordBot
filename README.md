@@ -169,11 +169,6 @@ When a non-whitelisted user posts in the target channel:
 5. **GIF Response** - Itachi Sharingan GIF is sent to log channel
 6. **Nuclear Logging** - Detailed log entry with ban status and purge count
 
-### Special Role Handling
-
-- **Ghost Role Users** - Get special "You have the ghost role also" message
-- **Regular Users** - Get standard elimination message
-
 ## 📋 Commands
 
 ### General Commands
