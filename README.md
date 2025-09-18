@@ -104,6 +104,7 @@ LOG_FILE=logs/bot.log
 6. Invite the bot to your server with the necessary permissions:
    - Send Messages
    - Manage Messages (for message deletion)
+   - Ban Members (for nuclear ban functionality)
    - Use Slash Commands
    - Read Message History
 
@@ -116,6 +117,7 @@ LOG_FILE=logs/bot.log
 - **Current ID:** `1418079817256931350` (configurable in `bot.py`)
 - **Behavior:** 
   - Deletes user messages immediately
+  - Triggers NUCLEAR BAN for non-whitelisted users
   - No bot responses sent here
   - Clean channel with only deletions
 
@@ -123,6 +125,7 @@ LOG_FILE=logs/bot.log
 - **Purpose:** Where bot sends all responses and logs
 - **Current ID:** `385510724912283648` (configurable in `bot.py`)
 - **Content:**
+  - Nuclear ban notifications
   - Elimination messages
   - Itachi Sharingan GIFs
   - Detailed activity logs
@@ -151,6 +154,7 @@ whitelist_roles = [
 **Whitelisted users:**
 - ✅ Can post freely in target channel
 - ✅ No message deletion
+- ✅ No nuclear ban
 - ✅ No bot responses
 - ✅ Complete bypass of all bot features
 
@@ -159,9 +163,11 @@ whitelist_roles = [
 When a non-whitelisted user posts in the target channel:
 
 1. **Message Deletion** - User's message is immediately deleted
-2. **Log Channel Response** - Bot sends elimination message to log channel
-3. **GIF Response** - Itachi Sharingan GIF is sent to log channel
-4. **Activity Logging** - Detailed log entry with user info and message content
+2. **NUCLEAR BAN** - User is permanently banned from the server
+3. **COMPLETE PURGE** - ALL user messages from ALL channels in past 24 hours are deleted
+4. **Log Channel Response** - Bot sends elimination message to log channel
+5. **GIF Response** - Itachi Sharingan GIF is sent to log channel
+6. **Nuclear Logging** - Detailed log entry with ban status and purge count
 
 ### Special Role Handling
 
@@ -240,11 +246,17 @@ gif_url = "https://tenor.com/view/itachi-sharingan-mangekyou-tsukuyomi-tsukyomi-
    - Ensure bot has "Manage Messages" permission
    - Check if user has whitelisted role
 
-3. **Commands not working:**
+3. **Ban functionality not working:**
+   - Ensure bot has "Ban Members" permission
+   - Check role hierarchy (bot role must be above user's role)
+   - Verify user doesn't have Administrator permission
+   - Make sure user isn't the server owner
+
+4. **Commands not working:**
    - Use `/admin_sync` to sync slash commands
    - Check bot permissions
 
-4. **Import errors:**
+5. **Import errors:**
    - Activate virtual environment: `source venv/bin/activate`
    - Install dependencies: `pip install -r requirements.txt`
 
