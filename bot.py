@@ -124,11 +124,11 @@ class HoneypotWatcherBot(commands.Bot):
         
         # Whitelist of role IDs that should be ignored
         whitelist_roles = [
-            #462663247934390275,  # Ghost role
-            # 213335817823715328,  # mods
-            # 359424853285142539,  # Knowledgeable
-            # 890067789832929280,  # Helpful
-            # 213334124767739904,  # Daunzo
+            462663247934390275,  # Ghost role
+            213335817823715328,  # mods
+            359424853285142539,  # Knowledgeable
+            890067789832929280,  # Helpful
+            213334124767739904,  # Daunzo
         ]
         
         # Check if user has any whitelisted roles
@@ -153,6 +153,30 @@ class HoneypotWatcherBot(commands.Bot):
                 except Exception as delete_error:
                     logger.error(f"Failed to delete message from {message.author.name}: {delete_error}")
                 
+                # BAN THE USER AND DELETE THEIR MESSAGES FROM PAST 24 HOURS
+                try:
+                    # Ban the user
+                    await message.author.ban(reason="Posted in restricted channel - auto-ban")
+                    logger.warning(f"BANNED user {message.author.name} ({message.author.id}) for posting in restricted channel")
+                    
+                    # Delete all messages from this user in the past 24 hours
+                    from datetime import datetime, timedelta
+                    cutoff_time = datetime.utcnow() - timedelta(hours=24)
+                    
+                    deleted_count = 0
+                    async for msg in message.channel.history(limit=None, after=cutoff_time):
+                        if msg.author.id == message.author.id:
+                            try:
+                                await msg.delete()
+                                deleted_count += 1
+                            except Exception as msg_delete_error:
+                                logger.error(f"Failed to delete message {msg.id}: {msg_delete_error}")
+                    
+                    logger.info(f"Deleted {deleted_count} messages from banned user {message.author.name}")
+                    
+                except Exception as ban_error:
+                    logger.error(f"Failed to ban user {message.author.name}: {ban_error}")
+                
                 # Send elimination messages to log channel instead
                 log_channel = self.get_channel(log_channel_id)
                 if log_channel:
@@ -175,7 +199,7 @@ class HoneypotWatcherBot(commands.Bot):
                 try:
                     log_channel = self.get_channel(log_channel_id)
                     if log_channel:
-                        log_message = f"👁️ **Activity Detected**\n**User:** {message.author.name} ({message.author.id})\n**Channel:** {message.channel.name} ({message.channel.id})\n**Ghost Role:** {'Yes' if has_ghost_role else 'No'}\n**Message:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}"
+                        log_message = f"🚨 **USER BANNED**\n**User:** {message.author.name} ({message.author.id})\n**Channel:** {message.channel.name} ({message.channel.id})\n**Ghost Role:** {'Yes' if has_ghost_role else 'No'}\n**Message:** {message.content[:100]}{'...' if len(message.content) > 100 else ''}\n**Action:** BANNED + Messages deleted from past 24h"
                         await log_channel.send(log_message)
                     else:
                         logger.warning(f"Could not find log channel with ID {log_channel_id}")
